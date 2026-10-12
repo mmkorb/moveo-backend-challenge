@@ -1,0 +1,3 @@
+{"time":"2026-10-12T03:00:16.123Z","level":"INFO","msg":"producer listening","addr":":8080"}
+{"time":"2026-10-12T03:02:29.480Z","level":"ERROR","msg":"request timed out","path":"/v1/activities","timeout_ms":10000}
+{"time":"2026-10-12T03:02:52.480Z","level":"ERROR","msg":"request timed out","path":"/v1/activities","timeout_ms":10000}

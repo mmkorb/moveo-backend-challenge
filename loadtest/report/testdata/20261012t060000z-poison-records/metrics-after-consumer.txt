@@ -1,0 +1,46 @@
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 27
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 9400000.0
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 34000000.0
+# HELP records_consumed_total Records consumed by result.
+# TYPE records_consumed_total counter
+records_consumed_total{result="dlq"} 50
+records_consumed_total{result="ok"} 23417
+# HELP retries_total Retries of calls to a dependency.
+# TYPE retries_total counter
+retries_total{dependency="kafka"} 2
+retries_total{dependency="postgres"} 0
+# HELP offset_commit_failures_total Offset commits that failed after a successful DB commit.
+# TYPE offset_commit_failures_total counter
+offset_commit_failures_total 0
+# HELP aggregate_flush_duration_seconds Duration of the aggregate upsert transaction.
+# TYPE aggregate_flush_duration_seconds histogram
+aggregate_flush_duration_seconds_bucket{le="0.005"} 12
+aggregate_flush_duration_seconds_bucket{le="0.01"} 152
+aggregate_flush_duration_seconds_bucket{le="0.025"} 540
+aggregate_flush_duration_seconds_bucket{le="0.05"} 831
+aggregate_flush_duration_seconds_bucket{le="0.1"} 935
+aggregate_flush_duration_seconds_bucket{le="0.25"} 966
+aggregate_flush_duration_seconds_bucket{le="0.5"} 972
+aggregate_flush_duration_seconds_bucket{le="1"} 974
+aggregate_flush_duration_seconds_bucket{le="2.5"} 974
+aggregate_flush_duration_seconds_bucket{le="5"} 974
+aggregate_flush_duration_seconds_bucket{le="10"} 974
+aggregate_flush_duration_seconds_bucket{le="+Inf"} 974
+aggregate_flush_duration_seconds_sum 30.418
+aggregate_flush_duration_seconds_count 974
+# HELP consumer_lag_records Consumer lag per partition.
+# TYPE consumer_lag_records gauge
+consumer_lag_records{partition="0"} 0
+consumer_lag_records{partition="1"} 0
+consumer_lag_records{partition="2"} 0
+consumer_lag_records{partition="3"} 0
+consumer_lag_records{partition="4"} 0
+consumer_lag_records{partition="5"} 0
+dlq_records_total{error_class="decode"} 26
+dlq_records_total{error_class="validation"} 24

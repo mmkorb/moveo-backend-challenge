@@ -1,0 +1,17 @@
+{"time":"2026-10-12T03:00:17.123Z","level":"INFO","msg":"starting","service":"consumer","workers":3}
+{"time":"2026-10-12T03:00:18.100Z","level":"INFO","msg":"no stored position; resuming from the Kafka committed offset","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":0,"committed_offset":-1}
+{"time":"2026-10-12T03:00:18.123Z","level":"INFO","msg":"partitions assigned","partitions":[0,1,2,3,4,5]}
+{"time":"2026-10-12T03:00:34.480Z","level":"INFO","msg":"flush","partition":0,"records":500}
+{"time":"2026-10-12T03:00:54.480Z","level":"INFO","msg":"flush","partition":1,"records":500}
+{"time":"2026-10-12T03:01:14.480Z","level":"INFO","msg":"flush","partition":2,"records":500}
+{"time":"2026-10-12T03:01:47.630Z","level":"INFO","msg":"starting","service":"consumer","workers":3}
+{"time":"2026-10-12T03:01:48.530Z","level":"WARN","msg":"kafka request failed, retrying","dependency":"kafka","attempt":1,"err":"NOT_COORDINATOR"}
+{"time":"2026-10-12T03:01:48.930Z","level":"WARN","msg":"kafka request failed, retrying","dependency":"kafka","attempt":2,"err":"NOT_COORDINATOR"}
+{"time":"2026-10-12T03:01:49.500Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":0,"stored_offset":2310,"committed_offset":2310}
+{"time":"2026-10-12T03:01:49.501Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":1,"stored_offset":2288,"committed_offset":2288}
+{"time":"2026-10-12T03:01:49.502Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":2,"stored_offset":2301,"committed_offset":2301}
+{"time":"2026-10-12T03:01:49.503Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":3,"stored_offset":2275,"committed_offset":2275}
+{"time":"2026-10-12T03:01:49.504Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":4,"stored_offset":2296,"committed_offset":2296}
+{"time":"2026-10-12T03:01:49.505Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":5,"stored_offset":2307,"committed_offset":2307}
+{"time":"2026-10-12T03:01:49.530Z","level":"INFO","msg":"partitions assigned","partitions":[0,1,2,3,4,5]}
+{"time":"2026-10-12T03:01:49.730Z","level":"WARN","msg":"partition worker queue at high-water mark, pausing fetch","partition":3}

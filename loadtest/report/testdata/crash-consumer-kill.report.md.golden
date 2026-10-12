@@ -1,0 +1,248 @@
+# Load test report — crash-consumer-kill (equal): PASS
+
+Run `20261012t030000z`, started 2026-10-12T03:00:00Z. 11 checks, 0 failed.
+
+## 1. Verdict
+
+| Check | Expected | Actual | Result |
+|---|---|---|---|
+| k6 threshold checks{phase:steady} | rate>0.99 | ok | **PASS** |
+| k6 threshold http_req_duration{phase:steady} | p(95)<300 | ok | **PASS** |
+| k6 threshold http_req_failed{phase:steady} | rate<0.01 | ok | **PASS** |
+| k6 run completed | exit code 0 (99 = thresholds crossed) | 0 | **PASS** |
+| Events accepted | > 0 | 35,998 | **PASS** |
+| No lost events (activity_count) | db ≥ accepted | db 36,000, accepted 35,998 (+2) | **PASS** |
+| Overcount within bound (activity_count) | db − accepted ≤ 0 + 2 unknown | db 36,000, accepted 35,998 (+2) | **PASS** |
+| Page views: no loss, overcount within bound | 0 ≤ db − accepted ≤ 0 + 2 unknown | db 21,602, accepted 21,601 (+1) | **PASS** |
+| Effectively once (db = input topic − DLQ) | db = input topic records − DLQ records | db 36,000, topic 36,000, dlq 0 (0) | **PASS** |
+| No container OOMKilled | none | none | **PASS** |
+| Consumer drained (lag 0) | before timeout | drained | **PASS** |
+
+## 2. Run
+
+| Item | Value |
+|---|---|
+| Scenario | `crash-consumer-kill` (k6 scenario `crash`) |
+| Profile | `equal` |
+| Experiment | none |
+| Run ID | `20261012t030000z` |
+| Compose project | `moveo-loadtest` |
+| Run start / end (UTC) | 2026-10-12T03:00:00Z → 2026-10-12T03:03:55Z |
+| k6 start / end (UTC) | 2026-10-12T03:00:31Z → 2026-10-12T03:03:32Z |
+| Load duration | 3m00s |
+| k6 exit code | 0 |
+| Docker host | 12 CPUs, 15.5 GiB — 29.8.2 Docker Desktop (compose 5.5.1) |
+
+**Images**
+
+| Container | Image |
+|---|---|
+| consumer-1 | `moveo-analytics/consumer:dev` |
+| kafka-1 | `apache/kafka:4.1.1` |
+| postgres-1 | `postgres:18.1-alpine` |
+| producer-1 | `moveo-analytics/producer:dev` |
+
+**Resource limits**
+
+| Service | Limits |
+|---|---|
+| consumer | cpus=1.0 memory=384M pids=200 |
+| k6 | cpus=1.0 memory=768M pids=512 |
+| kafka | cpus=1.5 memory=1.25G pids=1024 |
+| oneshot | cpus=0.5 memory=256M pids=256 |
+| postgres | cpus=1.0 memory=768M pids=256 |
+| probe | cpus=0.25 memory=64M pids=64 |
+| producer | cpus=0.75 memory=256M pids=200 |
+
+**Configuration**
+
+| Key | Value |
+|---|---|
+| `chaos.at_s` | 60 |
+| `chaos.down_for_s` | 15 |
+| `chaos.recovery_grace_s` | 30 |
+| `consumer_group` | analytics-consumer |
+| `consumer_replicas` | 1 |
+| `consumer_workers` | 3 |
+| `dlq_partitions` | 3 |
+| `dlq_topic` | incoming.user_activity.dlq |
+| `drain_timeout_s` | 300 |
+| `flush_max_records` | 500 |
+| `k6.LT_DURATION` | (default) |
+| `k6.LT_INVALID_RATIO` | (default) |
+| `k6.LT_RATE` | (default) |
+| `k6.LT_USERS` | (default) |
+| `partitions` | 6 |
+| `topic` | incoming.user_activity |
+
+## 3. Ingestion (producer)
+
+| Metric | Value |
+|---|---|
+| HTTP requests | 36,000 |
+| Achieved rate | 197.0 req/s |
+| Target rate | 200 req/s (script default) |
+| Iterations / dropped | 36,000 / 0 |
+| Accepted (202) | 35,998 (page views 21,601, previous UTC day 1,793) |
+| Rejected (4xx) | 0 (deliberately invalid sent: 0) |
+| Unknown (timeout / 5xx) | 2 |
+| http_req_failed | 0.01 % |
+| checks | 99.99 % |
+
+**Status breakdown**
+
+| Status | Requests |
+|---|---|
+| 202 accepted | 35,998 |
+| 4xx rejected | 0 |
+| 5xx / timeout (unknown) | 2 |
+
+**Latency (http_req_duration)**
+
+| avg | p50 | p90 | p95 | p99 | max |
+|---|---|---|---|---|---|
+| 4.9 ms | 2.9 ms | 7.1 ms | 11.9 ms | 41.3 ms | 10.02 s |
+
+**Producer `activities_published_total` (after − before)**
+
+| Result | Count |
+|---|---|
+| invalid | 0 |
+| kafka_error | 0 |
+| ok | 35,998 |
+
+## 4. Pipeline (consumer)
+
+| Metric | Value |
+|---|---|
+| Events consumed (ok) | 23,417 |
+| Consumer throughput | 189.5 events/s |
+| Records in input topic | 36,000 |
+| Max lag | 4,087 |
+| Final lag | 0 |
+| Drain time (last request → lag 0) | 9.4 s |
+| Flushes | 974 |
+| Flush duration p50 / p95 / p99 | 23.0 ms / 95.3 ms / 241.6 ms |
+| Retries | kafka 2, postgres 0 |
+| DLQ records (topic) | 0 |
+| DLQ by error class | n/a |
+| Offset commit failures (Kafka, informational) | 0 |
+| Fenced batches (offset_fence_rejections_total) | n/a |
+
+_Note: the consumer restarted during the run, so its counters (consumed, flushes, retries, flush quantiles) cover the last process only; throughput is SUM(activity_count) ÷ (load duration + drain time)._
+
+## 5. Correctness
+
+| | Accepted (k6) | Database | Overcount (db − accepted) |
+|---|---|---|---|
+| Activities | 35,998 | 36,000 | +2 |
+| Page views | 21,601 | 21,602 | +1 |
+
+- Allowed overcount: 0 … 0 + events_unknown (2). Rule: exactly zero in every scenario: the consumer stores its Kafka positions with the aggregates (ADR 0008, option A).
+- A negative overcount is **loss** and always fails.
+- Distinct users in the database: 4,987.
+
+| activity_date | rows | users | activity_count | page_view_count |
+|---|---|---|---|---|
+| 2026-10-11 | 1,642 | 1,642 | 1,800 | 1,090 |
+| 2026-10-12 | 4,987 | 4,987 | 34,200 | 20,512 |
+
+## 6. Resources
+
+| Container | CPU avg | CPU peak | Mem peak | Mem limit | Peak / limit | Net rx / tx | OOMKilled | Restarts | Exit | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| producer-1 | 33.8 % | 38.9 % | 28.3 MiB | 256.0 MiB | 11.05 % | 29.9 MiB / 16.7 MiB | false | 0 | 0 | running |
+| consumer-1 | 30.7 % | 95.1 % | 36.1 MiB | 384.0 MiB | 9.40 % | 17.9 MiB / 2.0 MiB | false | 0 | 0 | running |
+| consumer-migrate-1 | n/a | n/a | n/a | n/a | n/a | n/a / n/a | false | 0 | 0 | exited |
+| kafka-1 | 45.7 % | 52.9 % | 718.6 MiB | 1.2 GiB | 56.14 % | 28.1 MiB / 37.0 MiB | false | 0 | 0 | running |
+| kafka-init-1 | n/a | n/a | n/a | n/a | n/a | n/a / n/a | false | 0 | 0 | exited |
+| postgres-1 | 19.2 % | 21.9 % | 94.9 MiB | 768.0 MiB | 12.36 % | 2.5 MiB / 720.7 KiB | false | 0 | 0 | running |
+| k6-run-8f3c2a1b9d7e | 38.3 % | 43.6 % | 133.8 MiB | 768.0 MiB | 17.42 % | 4.3 MiB / 10.4 MiB | n/a | n/a | n/a | n/a |
+
+CPU % is docker's figure: 100 % = one core. Time-series charts are in report.html.
+
+CPU and memory figures cover the k6 window only (03:00:31 to 03:03:32 UTC); start-up and drain are excluded.
+
+## 7. Errors
+
+| Service | Lines | ERROR | WARN |
+|---|---|---|---|
+| consumer | 17 | 0 | 3 |
+| kafka | 3 | 0 | 1 |
+| postgres | 1 | 0 | 0 |
+| producer | 3 | 2 | 0 |
+
+**Top messages**
+
+| Service | Level | Count | Message |
+|---|---|---|---|
+| consumer | WARN | 2 | kafka request failed, retrying |
+| producer | ERROR | 2 | request timed out |
+| consumer | WARN | 1 | partition worker queue at high-water mark, pausing fetch |
+| kafka | WARN | 1 | [2026-10-12 03:01:47,010] WARN [GroupCoordinator 1]: Preparing to rebalance group analytics-consumer in state PreparingRebalance with old generation 1 |
+
+## 8. Chaos timeline
+
+Offsets are relative to the k6 start.
+
+| Time (UTC) | Offset | Event | Action | Details |
+|---|---|---|---|---|
+| 03:00:00.123 | -31.4 s | run_start |  | run_id=20261012t030000z scenario=crash-consumer-kill |
+| 03:00:28.023 | -3.5 s | stack_up |  | rc=0 |
+| 03:00:31.480 | +0.0 s | k6_start |  | k6_scenario=crash |
+| 03:01:31.500 | +60.0 s | chaos | kill consumer | ended_at=2026-10-12T03:01:31.910Z exit_codes={"moveo-loadtest-consumer-1":137} rc=0 |
+| 03:01:46.530 | +75.0 s | chaos | start consumer | ended_at=2026-10-12T03:01:47.410Z rc=0 |
+| 03:01:50.390 | +78.9 s | recovered | consumer | after_action=start ok=true seconds=3.86 |
+| 03:03:32.080 | +180.6 s | k6_end |  | exit_code=0 |
+| 03:03:32.280 | +180.8 s | drain_start |  |  |
+| 03:03:41.480 | +190.0 s | drain_end |  | final_lag=0 group_found=true seconds=9.4 timed_out=false |
+| 03:03:41.780 | +190.3 s | collect_start |  |  |
+| 03:03:55.480 | +204.0 s | collect_end |  |  |
+| 03:03:55.680 | +204.2 s | run_end |  |  |
+
+## 9. Recovery
+
+Resume events after the consumer's first start (`logs/consumer.log`, 2 starts). Gap = stored − committed offset; a partition without a committed offset counts from 0.
+
+| Time (UTC) | Member | Partition | Stored offset | Committed offset | Gap |
+|---|---|---|---|---|---|
+| 03:01:49.500 | 0 | 0 | 2,310 | 2,310 | 0 |
+| 03:01:49.501 | 0 | 1 | 2,288 | 2,288 | 0 |
+| 03:01:49.502 | 0 | 2 | 2,301 | 2,301 | 0 |
+| 03:01:49.503 | 0 | 3 | 2,275 | 2,275 | 0 |
+| 03:01:49.504 | 0 | 4 | 2,296 | 2,296 | 0 |
+| 03:01:49.505 | 0 | 5 | 2,307 | 2,307 | 0 |
+
+- Stored == committed on every partition: the commit gap was not exercised in this run.
+
+## 10. Artifacts
+
+- [k6 dashboard](k6-dashboard.html) — k6 web-dashboard export (time-series charts)
+- [k6 summary](k6-summary.json) — k6 handleSummary data
+- [k6 output](k6-output.log) — k6 stdout/stderr
+- [Run metadata](run.json) — scenario, timestamps, host, images, limits, config
+- [Container stats](stats.jsonl) — docker stats samples (JSON lines)
+- [Consumer lag](lag.jsonl) — lag samples (JSON lines)
+- [Timeline](timeline.jsonl) — run events and chaos actions (JSON lines)
+- [Chaos log](chaos.log) — output of the chaos commands
+- [Drain](drain.json) — drain time and final lag
+- [Producer metrics (before)](metrics-before-producer.txt) — Prometheus text
+- [Producer metrics (after)](metrics-after-producer.txt) — Prometheus text
+- [Consumer metrics (before)](metrics-before-consumer.txt) — Prometheus text
+- [Consumer metrics (after)](metrics-after-consumer.txt) — Prometheus text
+- [DB totals](db-totals.csv) — SUM(activity_count), SUM(page_view_count), users
+- [DB by date](db-by-date.csv) — rows per activity_date
+- [DLQ offsets](dlq-offsets.txt) — DLQ topic end offsets
+- [Topic offsets](topic-offsets.txt) — input topic end offsets
+- [Container inspect](inspect.jsonl) — OOMKilled, restarts, exit codes
+- [Logs summary](logs-summary.txt) — ERROR/WARN counts per service
+- [Log: consumer](logs/consumer.log) — container log
+- [Log: kafka](logs/kafka.log) — container log
+- [Log: postgres](logs/postgres.log) — container log
+- [Log: producer](logs/producer.log) — container log
+
+
+### Collection notes
+
+- stats.jsonl: 7 samples skipped (stopped containers or malformed lines)
+

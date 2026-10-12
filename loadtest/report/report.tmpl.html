@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Run.Title}}— {{.Verdict}} — load test report</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --good: #006300; --good-bg: #e6f3e6; --bad: #b42727; --bad-bg: #fbeaea;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --good: #0ca30c; --good-bg: #13261a; --bad: #e66767; --bad-bg: #2d1717;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 14px; margin: 20px 0 8px; color: var(--ink-2); }
+p, li { color: var(--ink-2); }
+code { font: 12.5px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.sub { color: var(--ink-2); margin: 0; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.pass { color: var(--good); background: var(--good-bg); }
+.fail { color: var(--bad); background: var(--bad-bg); }
+header.banner { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+header.banner .big { font-size: 28px; font-weight: 800; padding: 4px 18px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 16px 0 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.tile .k { color: var(--muted); font-size: 12px; }
+.tile .v { font-size: 20px; font-weight: 650; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; background: var(--surface); border: 1px solid var(--border); }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; font-size: 12.5px; background: var(--page); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.na { color: var(--muted); font-style: italic; }
+figure { margin: 16px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+figcaption { font-weight: 600; margin-bottom: 6px; }
+svg.chart { width: 100%; height: auto; display: block; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg text { fill: var(--muted); font-size: 11px; font-family: system-ui, sans-serif; }
+svg .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .hit { fill: transparent; }
+svg .hit:hover { fill: var(--grid); fill-opacity: .55; }
+svg .marker { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 4 3; }
+svg .mlabel { fill: var(--ink-2); font-size: 10.5px; }
+.s1 { stroke: var(--s1); } .s2 { stroke: var(--s2); } .s3 { stroke: var(--s3); } .s4 { stroke: var(--s4); }
+.s5 { stroke: var(--s5); } .s6 { stroke: var(--s6); } .s7 { stroke: var(--s7); } .s8 { stroke: var(--s8); }
+.k1 { background: var(--s1); } .k2 { background: var(--s2); } .k3 { background: var(--s3); } .k4 { background: var(--s4); }
+.k5 { background: var(--s5); } .k6 { background: var(--s6); } .k7 { background: var(--s7); } .k8 { background: var(--s8); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12.5px; color: var(--ink-2); }
+.legend .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+</style>
+</head>
+<body>
+<main>
+<header class="banner">
+  <div>
+    <h1>Load test report — <code>{{.Run.Title}}</code></h1>
+    <p class="sub">{{if .Run.RunID}}Run <code>{{.Run.RunID}}</code>{{end}}{{if .Run.Start}} · {{.Run.Start}}{{end}} · {{len .Checks}} checks, {{.Failed}} failed</p>
+  </div>
+  <span class="badge big {{lower .Verdict}}">{{.Verdict}}</span>
+</header>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Accepted events</div><div class="v">{{.Correctness.Accepted.Int}}</div></div>
+  <div class="tile"><div class="k">Overcount (db − accepted)</div><div class="v">{{.Correctness.Overcount.Signed}}</div></div>
+  <div class="tile"><div class="k">Achieved rate</div><div class="v">{{.Ingestion.Rate.F 1}} req/s</div></div>
+  <div class="tile"><div class="k">p95 latency</div><div class="v">{{.Ingestion.P95.Ms}}</div></div>
+  <div class="tile"><div class="k">Drain time</div><div class="v">{{if .Pipeline.DrainTimedOut}}timed out{{else}}{{.Pipeline.DrainSeconds.Sec}}{{end}}</div></div>
+  <div class="tile"><div class="k">Max lag</div><div class="v">{{.Pipeline.MaxLag.Int}}</div></div>
+</div>
+
+<h2 id="verdict">1. Verdict</h2>
+<div class="scroll"><table>
+<tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr>
+{{range .Checks}}<tr><td>{{.Name}}</td><td>{{.Expected}}</td><td>{{.Actual}}</td><td><span class="badge {{lower .Status}}">{{.Status}}</span></td></tr>
+{{end}}</table></div>
+
+<h2 id="run">2. Run</h2>
+{{with .Run}}{{if .Available}}
+<div class="scroll"><table>
+<tr><th>Item</th><th>Value</th></tr>
+<tr><td>Scenario</td><td><code>{{.Scenario}}</code>{{if .K6Scen}} (k6 scenario <code>{{.K6Scen}}</code>){{end}}</td></tr>
+<tr><td>Profile</td><td>{{if .Profile}}<code>{{.Profile}}</code>{{else}}none (default limits){{end}}</td></tr>
+<tr><td>Experiment</td><td>{{if .ExperimentName}}<code>{{.ExperimentName}}</code> (<code>{{.ExperimentID}}</code>){{else}}none{{end}}</td></tr>
+<tr><td>Run ID</td><td><code>{{.RunID}}</code></td></tr>
+<tr><td>Compose project</td><td><code>{{.Project}}</code></td></tr>
+<tr><td>Run start / end (UTC)</td><td>{{or .Start "n/a"}} → {{or .End "n/a"}}</td></tr>
+<tr><td>k6 start / end (UTC)</td><td>{{or .K6Start "n/a"}} → {{or .K6End "n/a"}}</td></tr>
+<tr><td>Load duration</td><td>{{.Duration.Sec}}</td></tr>
+<tr><td>k6 exit code</td><td>{{.K6Exit.Int}}</td></tr>
+<tr><td>Docker host</td><td>{{or .HostCPUs "n/a"}} CPUs, {{or .HostMem "n/a"}}{{if .Docker}} — {{.Docker}}{{end}}</td></tr>
+</table></div>
+{{if .Images}}<h3>Images</h3>
+<div class="scroll"><table><tr><th>Container</th><th>Image</th></tr>
+{{range .Images}}<tr><td>{{.K}}</td><td><code>{{.V}}</code></td></tr>
+{{end}}</table></div>{{end}}
+{{if .Limits}}<h3>Resource limits</h3>
+<div class="scroll"><table><tr><th>Service</th><th>Limits</th></tr>
+{{range .Limits}}<tr><td>{{.K}}</td><td><code>{{.V}}</code></td></tr>
+{{end}}</table></div>{{end}}
+{{if .Config}}<h3>Configuration</h3>
+<div class="scroll"><table><tr><th>Key</th><th>Value</th></tr>
+{{range .Config}}<tr><td><code>{{.K}}</code></td><td>{{.V}}</td></tr>
+{{end}}</table></div>{{end}}
+{{else}}<p class="na">Not available: run.json missing.</p>{{end}}{{end}}
+
+<h2 id="ingestion">3. Ingestion (producer)</h2>
+{{with .Ingestion}}{{if .Available}}
+<div class="scroll"><table>
+<tr><th>Metric</th><th class="n">Value</th></tr>
+<tr><td>HTTP requests</td><td class="n">{{.Requests.Int}}</td></tr>
+<tr><td>Achieved rate</td><td class="n">{{.Rate.F 1}} req/s</td></tr>
+<tr><td>Target rate</td><td class="n">{{.TargetRate.F 0}} req/s{{if .TargetNote}} ({{.TargetNote}}){{end}}</td></tr>
+<tr><td>Iterations / dropped</td><td class="n">{{.Iterations.Int}} / {{.Dropped.Int}}</td></tr>
+<tr><td>Accepted (202)</td><td class="n">{{.Accepted.Int}}</td></tr>
+<tr><td>… page views / previous UTC day</td><td class="n">{{.PageViews.Int}} / {{.PrevDay.Int}}</td></tr>
+<tr><td>Rejected (4xx) / deliberately invalid sent</td><td class="n">{{.Rejected.Int}} / {{.InvalidSent.Int}}</td></tr>
+<tr><td>Unknown (timeout / 5xx)</td><td class="n">{{.Unknown.Int}}</td></tr>
+<tr><td>http_req_failed</td><td class="n">{{.FailedRate.Pct}}</td></tr>
+<tr><td>checks</td><td class="n">{{.ChecksRate.Pct}}</td></tr>
+</table></div>
+<h3>Status breakdown</h3>
+<div class="scroll"><table><tr><th>Status</th><th class="n">Requests</th></tr>
+{{range .Status}}<tr><td>{{.K}}</td><td class="n">{{.V}}</td></tr>
+{{end}}</table></div>
+<h3>Latency (http_req_duration)</h3>
+<div class="scroll"><table>
+<tr><th class="n">avg</th><th class="n">p50</th><th class="n">p90</th><th class="n">p95</th><th class="n">p99</th><th class="n">max</th></tr>
+<tr><td class="n">{{.Avg.Ms}}</td><td class="n">{{.P50.Ms}}</td><td class="n">{{.P90.Ms}}</td><td class="n">{{.P95.Ms}}</td><td class="n">{{.P99.Ms}}</td><td class="n">{{.Max.Ms}}</td></tr>
+</table></div>
+{{else}}<p class="na">Not available: k6-summary.json missing or unreadable.</p>{{end}}
+{{if .Published}}<h3>Producer <code>activities_published_total</code> (after − before)</h3>
+<div class="scroll"><table><tr><th>Result</th><th class="n">Count</th></tr>
+{{range .Published}}<tr><td>{{.K}}</td><td class="n">{{.V}}</td></tr>
+{{end}}</table></div>{{end}}{{end}}
+
+<h2 id="pipeline">4. Pipeline (consumer)</h2>
+{{with .Pipeline}}
+<div class="scroll"><table>
+<tr><th>Metric</th><th class="n">Value</th></tr>
+<tr><td>Events consumed (ok)</td><td class="n">{{.Consumed.Int}}</td></tr>
+<tr><td>Consumer throughput</td><td class="n">{{.Throughput.F 1}} events/s</td></tr>
+<tr><td>Records in input topic</td><td class="n">{{.TopicRecords.Int}}</td></tr>
+<tr><td>Max lag</td><td class="n">{{.MaxLag.Int}}</td></tr>
+<tr><td>Final lag</td><td class="n">{{.FinalLag.Int}}</td></tr>
+<tr><td>Drain time (last request → lag 0)</td><td class="n">{{if not .DrainAvailable}}n/a{{else if .DrainTimedOut}}<span class="badge fail">timed out</span>{{else}}{{.DrainSeconds.Sec}}{{end}}</td></tr>
+<tr><td>Flushes</td><td class="n">{{.Flushes.Int}}</td></tr>
+<tr><td>Flush duration p50 / p95 / p99</td><td class="n">{{.FlushP50.Sec}} / {{.FlushP95.Sec}} / {{.FlushP99.Sec}}</td></tr>
+<tr><td>Retries</td><td class="n">{{range $i, $r := .Retries}}{{if $i}}, {{end}}{{$r.K}} {{$r.V}}{{else}}n/a{{end}}</td></tr>
+<tr><td>DLQ records (topic)</td><td class="n">{{.DLQTopic.Int}}</td></tr>
+<tr><td>DLQ by error class</td><td class="n">{{range $i, $r := .DLQByClass}}{{if $i}}, {{end}}{{$r.K}} {{$r.V}}{{else}}n/a{{end}}</td></tr>
+<tr><td>Offset commit failures (Kafka, informational)</td><td class="n">{{.CommitFailures.Int}}</td></tr>
+<tr><td>Fenced batches (offset_fence_rejections_total)</td><td class="n">{{.Fenced.Int}}</td></tr>
+{{with .Poison}}<tr><td>Poison records injected (written straight to the input topic)</td><td class="n">{{.Count.Int}}: {{range $i, $r := .Kinds}}{{if $i}}, {{end}}{{$r.K}} {{$r.V}}{{end}}</td></tr>
+<tr><td>Expected DLQ by error class (injected)</td><td class="n">{{range $i, $r := .ClassRows}}{{if $i}}, {{end}}{{$r.K}} {{$r.V}}{{end}}</td></tr>
+{{end}}</table></div>
+{{if .ThroughputNote}}<p>Note: {{.ThroughputNote}}.</p>{{end}}
+{{if not .Available}}<p class="na">Consumer metrics not available: values from /metrics are n/a.</p>{{end}}
+{{with .LagChart}}{{template "chart" .}}{{end}}
+{{end}}
+
+<h2 id="correctness">5. Correctness</h2>
+{{with .Correctness}}{{if .Available}}
+<div class="scroll"><table>
+<tr><th></th><th class="n">Accepted (k6)</th><th class="n">Database</th><th class="n">Overcount (db − accepted)</th></tr>
+<tr><td>Activities</td><td class="n">{{.Accepted.Int}}</td><td class="n">{{.DBActivity.Int}}</td><td class="n">{{.Overcount.Signed}}</td></tr>
+<tr><td>Page views</td><td class="n">{{.PVAccepted.Int}}</td><td class="n">{{.DBPageViews.Int}}</td><td class="n">{{.PVOvercount.Signed}}</td></tr>
+</table></div>
+<ul>
+<li>Allowed overcount: 0 … {{.Bound.Int}} + events_unknown ({{.Unknown.Int}}). Rule: {{.BoundRule}}.</li>
+<li>A negative overcount is <strong>loss</strong> and always fails.</li>
+<li>Distinct users in the database: {{.Users.Int}}.</li>
+</ul>
+{{if .ByDate}}<div class="scroll"><table>
+<tr><th>activity_date</th><th class="n">rows</th><th class="n">users</th><th class="n">activity_count</th><th class="n">page_view_count</th></tr>
+{{range .ByDate}}<tr><td>{{.Date}}</td><td class="n">{{grp .Rows}}</td><td class="n">{{grp .Users}}</td><td class="n">{{grp .Activity}}</td><td class="n">{{grp .PageViews}}</td></tr>
+{{end}}</table></div>{{end}}
+{{else}}<p class="na">Not available: db-totals.csv missing or empty.</p>{{end}}{{end}}
+
+<h2 id="resources">6. Resources</h2>
+{{with .Resources}}{{if .Available}}
+<div class="scroll"><table>
+<tr><th>Container</th><th class="n">CPU avg</th><th class="n">CPU peak</th><th class="n">Mem peak</th><th class="n">Mem limit</th><th class="n">Peak / limit</th><th class="n">Net rx / tx</th><th>OOMKilled</th><th class="n">Restarts</th><th class="n">Exit</th><th>Status</th></tr>
+{{range .Containers}}<tr><td>{{.Name}}</td><td class="n">{{.CPUAvg.Perc}}</td><td class="n">{{.CPUPeak.Perc}}</td><td class="n">{{.MemPeak.Bytes}}</td><td class="n">{{.MemLimit.Bytes}}</td><td class="n">{{.MemPct.Pct}}</td><td class="n">{{.NetRx.Bytes}} / {{.NetTx.Bytes}}</td><td>{{if eq .OOMKilled "true"}}<span class="badge fail">true</span>{{else}}{{.OOMKilled}}{{end}}</td><td class="n">{{.Restarts}}</td><td class="n">{{.ExitCode}}</td><td>{{.Status}}</td></tr>
+{{end}}</table></div>
+<p>CPU % is the docker stats figure: 100 % = one core. Dashed lines mark chaos actions and the k6 window; hover a chart for the values at that sample.</p>
+{{if .WindowNote}}<p>{{.WindowNote}}</p>{{end}}
+{{with .CPUChart}}{{template "chart" .}}{{end}}
+{{with .MemChart}}{{template "chart" .}}{{end}}
+{{else}}<p class="na">Not available: stats.jsonl and inspect.jsonl missing.</p>{{end}}{{end}}
+
+<h2 id="errors">7. Errors</h2>
+{{with .Errors}}{{if .Available}}
+<div class="scroll"><table><tr><th>Service</th><th class="n">Lines</th><th class="n">ERROR</th><th class="n">WARN</th></tr>
+{{range .Services}}<tr><td>{{.Service}}</td><td class="n">{{.Lines}}</td><td class="n">{{.Errors}}</td><td class="n">{{.Warns}}</td></tr>
+{{end}}</table></div>
+{{if .Top}}<h3>Top messages</h3>
+<div class="scroll"><table><tr><th>Service</th><th>Level</th><th class="n">Count</th><th>Message</th></tr>
+{{range .Top}}<tr><td>{{.Service}}</td><td>{{.Level}}</td><td class="n">{{.Count}}</td><td><code>{{.Msg}}</code></td></tr>
+{{end}}</table></div>{{end}}
+{{else}}<p class="na">Not available: logs-summary.txt and logs/ missing.</p>{{end}}{{end}}
+
+{{if .Timeline.Show}}
+<h2 id="timeline">8. Chaos timeline</h2>
+{{with .Timeline}}{{if .Available}}
+<p>Offsets are relative to the k6 start.</p>
+<div class="scroll"><table><tr><th>Time (UTC)</th><th class="n">Offset</th><th>Event</th><th>Action</th><th>Details</th></tr>
+{{range .Events}}<tr><td>{{.Time}}</td><td class="n">{{.Offset}}</td><td>{{.Event}}</td><td>{{.Action}}</td><td><code>{{.Details}}</code></td></tr>
+{{end}}</table></div>
+{{else}}<p class="na">Not available: timeline.jsonl missing.</p>{{end}}{{end}}
+{{end}}
+
+{{if .Recovery.Show}}
+<h2 id="recovery">{{.RecoveryNum}}. Recovery</h2>
+{{with .Recovery}}{{if .Available}}
+<p>Resume events after the consumer's first start (<code>logs/consumer.log</code>, {{.Starts}} starts). Gap = stored − committed offset; a partition without a committed offset counts from 0.</p>
+<div class="scroll"><table><tr><th>Time (UTC)</th><th>Member</th><th class="n">Partition</th><th class="n">Stored offset</th><th class="n">Committed offset</th><th class="n">Gap</th></tr>
+{{range .Rows}}<tr><td>{{.Time}}</td><td>{{.Member}}</td><td class="n">{{.Partition}}</td><td class="n">{{.Stored}}</td><td class="n">{{.Committed}}</td><td class="n">{{.Gap}}</td></tr>
+{{end}}</table></div>
+{{if .GapPartitions}}<p>Records protected from double counting by the stored position: <strong>{{.Protected.Int}}</strong> (partitions that resumed with a gap: {{.GapPartitions}}).</p>
+{{else}}<p>Stored == committed on every partition: the commit gap was not exercised in this run.</p>{{end}}
+{{else}}<p class="na">Not available: <code>logs/consumer.log</code> is missing or has no resume lines after the first start; the commit gap was not measured.</p>{{end}}
+{{if or .FenceRejections.OK .FenceResyncs.OK}}<p>Fence counters: <code>offset_fence_rejections_total</code> {{.FenceRejections.Int}}, <code>offset_fence_resyncs_total</code> {{.FenceResyncs.Int}}{{if .FenceNote}} ({{.FenceNote}}){{end}}.</p>{{end}}
+{{end}}
+{{end}}
+
+<h2 id="artifacts">{{.ArtifactsNum}}. Artifacts</h2>
+<ul>
+{{range .Artifacts}}<li><a href="{{.Path}}">{{.Name}}</a> — {{.Desc}}</li>
+{{end}}</ul>
+{{if .Notes}}<h3>Collection notes</h3>
+<ul>
+{{range .Notes}}<li>{{.}}</li>
+{{end}}</ul>{{end}}
+</main>
+</body>
+</html>
+{{define "chart"}}<figure>
+<figcaption>{{.Title}}</figcaption>
+<svg class="chart" viewBox="0 0 {{.W}} {{.H}}" role="img" aria-label="{{.AriaLabel}}">
+{{range .YTicks}}<line class="grid" x1="{{$.X0}}" x2="{{$.X1}}" y1="{{.Pos}}" y2="{{.Pos}}"/>
+<text x="{{$.YLabelX}}" y="{{.Pos}}" text-anchor="end" dominant-baseline="middle">{{.Label}}</text>
+{{end}}<line class="axis" x1="{{.X0}}" x2="{{.X1}}" y1="{{.Y1}}" y2="{{.Y1}}"/>
+{{range .XTicks}}<text x="{{.Pos}}" y="{{$.XLabelY}}" text-anchor="middle">{{.Label}}</text>
+{{end}}{{range .Markers}}<line class="marker" x1="{{.X}}" x2="{{.X}}" y1="{{$.Y0}}" y2="{{$.Y1}}"/>
+<text class="mlabel" x="{{.LabelX}}" y="{{.LabelY}}">{{.Label}}</text>
+{{end}}{{range .Series}}{{$name := .Name}}{{$slot := .Slot}}{{range .Segments}}<polyline class="line s{{$slot}}" points="{{.}}"><title>{{$name}}</title></polyline>
+{{end}}{{end}}{{range .Hits}}<rect class="hit" x="{{.X}}" y="{{$.Y0}}" width="{{.W}}" height="{{$.PlotH}}"><title>{{.Title}}</title></rect>
+{{end}}</svg>
+{{if .Legend}}<div class="legend">{{range .Series}}<span><span class="sw k{{.Slot}}"></span>{{.Name}}</span>{{end}}</div>{{end}}
+</figure>{{end}}

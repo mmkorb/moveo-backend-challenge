@@ -1,0 +1,27 @@
+{
+  "started_at": "2026-10-12T03:03:32.280Z",
+  "finished_at": "2026-10-12T03:03:41.480Z",
+  "seconds": 9.4,
+  "timed_out": false,
+  "group_found": true,
+  "final_lag": 0,
+  "polls": 3,
+  "timeout_seconds": 300,
+  "samples": [
+    {
+      "ts": "2026-10-12T03:03:33.280Z",
+      "group_found": true,
+      "lag": 230
+    },
+    {
+      "ts": "2026-10-12T03:03:36.380Z",
+      "group_found": true,
+      "lag": 61
+    },
+    {
+      "ts": "2026-10-12T03:03:41.480Z",
+      "group_found": true,
+      "lag": 0
+    }
+  ]
+}

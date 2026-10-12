@@ -1,0 +1,4 @@
+{"time":"2026-10-12T03:00:17.123Z","level":"INFO","msg":"starting","service":"consumer","workers":3}
+{"time":"2026-10-12T03:00:18.100Z","level":"INFO","msg":"no stored position; resuming from the Kafka committed offset","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":0,"committed_offset":-1}
+{"time":"2026-10-12T03:00:18.123Z","level":"INFO","msg":"partitions assigned","partitions":[0,1,2,3,4,5]}
+{"time":"2026-10-12T03:01:32.500Z","level":"WARN","msg":"record dead-lettered","component":"dlq-publisher","topic":"incoming.user_activity","partition":0,"offset":1900,"error_class":"decode","event_id":""}

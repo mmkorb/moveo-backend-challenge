@@ -1,0 +1,20 @@
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 14
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 2100000.0
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 16000000.0
+# HELP activities_published_total Activities handled by POST /v1/activities by result.
+# TYPE activities_published_total counter
+activities_published_total{result="invalid"} 0
+activities_published_total{result="kafka_error"} 0
+activities_published_total{result="ok"} 0
+# HELP retries_total Retries of calls to a dependency.
+# TYPE retries_total counter
+retries_total{dependency="kafka"} 0
+# HELP kafka_produce_bytes_total Total number of bytes produced.
+# TYPE kafka_produce_bytes_total counter
+kafka_produce_bytes_total{node_id="1"} 0

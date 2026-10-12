@@ -1,0 +1,13 @@
+{"time":"2026-10-12T03:00:17.123Z","level":"INFO","msg":"starting","service":"consumer","workers":3}
+{"time":"2026-10-12T03:00:18.100Z","level":"INFO","msg":"no stored position; resuming from the Kafka committed offset","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":0,"committed_offset":-1}
+{"time":"2026-10-12T03:00:18.123Z","level":"INFO","msg":"partitions assigned","partitions":[0,1,2,3,4,5]}
+{"time":"2026-10-12T03:01:36.100Z","level":"WARN","msg":"offset commit failed after db commit","component":"kafka-consumer","member":0,"partition":0,"offset":2290,"batch_size":31,"error_type":"timeout"}
+{"time":"2026-10-12T03:02:07.630Z","level":"INFO","msg":"starting","service":"consumer","workers":3}
+{"time":"2026-10-12T03:02:09.500Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":0,"stored_offset":2310,"committed_offset":2279}
+{"time":"2026-10-12T03:02:09.501Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":1,"stored_offset":2288,"committed_offset":2256}
+{"time":"2026-10-12T03:02:09.502Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":2,"stored_offset":2301,"committed_offset":2301}
+{"time":"2026-10-12T03:02:09.503Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":3,"stored_offset":2275,"committed_offset":2242}
+{"time":"2026-10-12T03:02:09.504Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":4,"stored_offset":2296,"committed_offset":2263}
+{"time":"2026-10-12T03:02:09.505Z","level":"INFO","msg":"resuming from the stored position","component":"kafka-consumer","member":0,"topic":"incoming.user_activity","partition":5,"stored_offset":2307,"committed_offset":2280}
+{"time":"2026-10-12T03:02:09.530Z","level":"INFO","msg":"partitions assigned","partitions":[0,1,2,3,4,5]}
+{"time":"2026-10-12T03:02:09.800Z","level":"INFO","msg":"committed the stored position to Kafka","component":"kafka-consumer","member":0,"partition":0,"stored_offset":2310}

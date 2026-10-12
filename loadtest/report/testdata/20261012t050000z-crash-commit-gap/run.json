@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "scenario": "crash-commit-gap",
+  "k6_scenario": "crash",
+  "profile": "equal",
+  "experiment": {"id": "20261012t040000z", "name": "suite"},
+  "run_id": "20261012t050000z",
+  "user_prefix": "lt-20261012t050000z-",
+  "project": "moveo-loadtest",
+  "results_dir": "20261012t050000z-crash-commit-gap",
+  "keep": false,
+  "build": true,
+  "started_at": "2026-10-12T03:00:00.123Z",
+  "stack_ready_at": "2026-10-12T03:00:28.023Z",
+  "k6_started_at": "2026-10-12T03:00:31.480Z",
+  "k6_finished_at": "2026-10-12T03:03:32.080Z",
+  "k6_exit_code": 0,
+  "drain_seconds": 9.4,
+  "finished_at": "2026-10-12T03:03:55.680Z",
+  "host": {
+    "docker_cpus": 12,
+    "docker_mem_bytes": 16642998272,
+    "docker_server_version": "29.8.2",
+    "docker_os": "Docker Desktop",
+    "compose_version": "5.5.1"
+  },
+  "images": [
+    {
+      "ContainerName": "moveo-loadtest-consumer-1",
+      "Repository": "moveo-analytics/consumer",
+      "Tag": "dev",
+      "ID": "sha256:1c0f",
+      "Size": 21495808
+    },
+    {
+      "ContainerName": "moveo-loadtest-kafka-1",
+      "Repository": "apache/kafka",
+      "Tag": "4.1.1",
+      "ID": "sha256:9a1e",
+      "Size": 412000000
+    },
+    {
+      "ContainerName": "moveo-loadtest-postgres-1",
+      "Repository": "postgres",
+      "Tag": "18.1-alpine",
+      "ID": "sha256:77b2",
+      "Size": 278000000
+    },
+    {
+      "ContainerName": "moveo-loadtest-producer-1",
+      "Repository": "moveo-analytics/producer",
+      "Tag": "dev",
+      "ID": "sha256:5d3a",
+      "Size": 19922944
+    }
+  ],
+  "limits": {
+    "kafka": {
+      "cpus": "1.5",
+      "memory": "1.25G",
+      "pids": 1024
+    },
+    "postgres": {
+      "cpus": "1.0",
+      "memory": "768M",
+      "pids": 256
+    },
+    "producer": {
+      "cpus": "0.75",
+      "memory": "256M",
+      "pids": 200
+    },
+    "consumer": {
+      "cpus": "1.0",
+      "memory": "384M",
+      "pids": 200
+    },
+    "k6": {
+      "cpus": "1.0",
+      "memory": "768M",
+      "pids": 512
+    },
+    "oneshot": {
+      "cpus": "0.5",
+      "memory": "256M",
+      "pids": 256
+    },
+    "probe": {
+      "cpus": "0.25",
+      "memory": "64M",
+      "pids": 64
+    }
+  },
+  "config": {
+    "topic": "incoming.user_activity",
+    "partitions": 6,
+    "dlq_topic": "incoming.user_activity.dlq",
+    "dlq_partitions": 3,
+    "consumer_group": "analytics-consumer",
+    "consumer_workers": 3,
+    "flush_max_records": 500,
+    "consumer_replicas": 1,
+    "drain_timeout_s": 300,
+    "k6": {
+      "LT_RATE": "",
+      "LT_DURATION": "",
+      "LT_USERS": "",
+      "LT_INVALID_RATIO": ""
+    },
+    "chaos": {
+      "at_s": 60,
+      "down_for_s": 25,
+      "recovery_grace_s": 30
+    }
+  },
+  "expect": {
+    "overcount_max": 0,
+    "consumer_stop_exit_code": null
+  }
+}
+

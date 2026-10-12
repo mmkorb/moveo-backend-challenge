@@ -1,0 +1,10 @@
+{"ts":"2026-10-12T03:00:00.123Z","event":"run_start","scenario":"poison-records","run_id":"20261012t060000z"}
+{"ts":"2026-10-12T03:00:28.023Z","event":"stack_up","rc":0}
+{"ts":"2026-10-12T03:00:31.480Z","event":"k6_start","k6_scenario":"crash"}
+{"ts":"2026-10-12T03:01:31.480Z","event":"poison_injected","rc":0,"count":50,"classes":{"decode":26,"validation":24},"kinds":{"control_char_user_id":6,"invalid_json":7,"invalid_timestamp":6,"missing_fields":6,"missing_timestamp":6,"truncated_json":7,"wrong_type_user_id":6,"zero_timestamp":6}}
+{"ts":"2026-10-12T03:03:32.080Z","event":"k6_end","exit_code":0}
+{"ts":"2026-10-12T03:03:32.280Z","event":"drain_start"}
+{"ts":"2026-10-12T03:03:41.480Z","event":"drain_end","seconds":9.4,"timed_out":false,"group_found":true,"final_lag":0}
+{"ts":"2026-10-12T03:03:41.780Z","event":"collect_start"}
+{"ts":"2026-10-12T03:03:55.480Z","event":"collect_end"}
+{"ts":"2026-10-12T03:03:55.680Z","event":"run_end"}
