@@ -1,0 +1,9 @@
+{
+  "user_id": "12345",
+  "activity_type": "page_view",
+  "timestamp": "2024-07-01T12:34:56Z",
+  "metadata": {
+    "page_url": "https://example.com/home",
+    "referrer": "https://google.com"
+  }
+}
