@@ -1,0 +1,26 @@
+# Local configuration and secrets (templates: .env.example, deploy/secrets/*.example)
+.env
+.env.*
+!.env.example
+deploy/secrets/*.txt
+
+# Go build and test outputs
+bin/
+*.exe
+*.test
+*.out
+*.prof
+coverage/
+
+# Load-test runs (loadtest/run.sh) and copies of their reports
+loadtest/results/
+temp/
+
+
+# Editors and OS files
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db

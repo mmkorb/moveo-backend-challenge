@@ -1,0 +1,35 @@
+version: "2"
+run:
+  # Lint the Docker-backed tests too. `make lint` reads this
+  # file, so it covers the same files as a direct golangci-lint run.
+  build-tags:
+    - integration
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - forbidigo
+    - gosec
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print.*$
+        - pattern: ^slog\.SetDefault$
+        - pattern: ^promauto\.
+  exclusions:
+    rules:
+      # Tests: unchecked Close in defers, fixture paths and fixed seeds, and
+      # context-free httptest/net helpers are not worth a nolint on every line.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+          - noctx
+formatters:
+  enable:
+    - gofmt
+    - goimports
