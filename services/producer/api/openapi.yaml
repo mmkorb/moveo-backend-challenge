@@ -1,0 +1,241 @@
+openapi: 3.1.0
+info:
+  title: Moveo Analytics Producer API
+  version: 1.0.0
+  description: |
+    Ingestion API of the producer service. Each accepted request is validated
+    and published to the Kafka topic `incoming.user_activity` before the
+    response is sent: `202 Accepted` means the broker acknowledged the record
+    (`acks=all`). Delivery is at-least-once; a client retry after a lost
+    response can produce a duplicate event.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local Docker Compose
+tags:
+  - name: ingestion
+  - name: operations
+paths:
+  /v1/activities:
+    post:
+      tags: [ingestion]
+      operationId: registerActivity
+      summary: Validate one user activity event and publish it to Kafka
+      description: |
+        The body must be a single JSON object of at most 64 KiB. Unknown
+        fields and trailing data are rejected. `activity_type` accepts any
+        value within its length bound. The request schema matches
+        `contracts/user_activity.v1.schema.json`, plus the rule that
+        `timestamp` is RFC 3339 and is normalized to UTC before publishing.
+      parameters:
+        - $ref: "#/components/parameters/Traceparent"
+        - $ref: "#/components/parameters/Tracestate"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityRequest"
+            example:
+              user_id: "12345"
+              activity_type: page_view
+              timestamp: "2024-07-01T12:34:56Z"
+              metadata:
+                page_url: https://example.com/home
+                referrer: https://google.com
+      responses:
+        "202":
+          description: The event was published and acknowledged by Kafka.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestID"
+            traceparent:
+              $ref: "#/components/headers/Traceparent"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Accepted"
+        "400":
+          description: Malformed JSON, unknown field, trailing data or a violated field rule.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestID"
+            traceparent:
+              $ref: "#/components/headers/Traceparent"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "413":
+          description: The body is larger than 64 KiB.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "415":
+          description: The Content-Type is not `application/json`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: Unexpected server error (generic message; see the logs by request ID).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "503":
+          description: Kafka is unavailable or the publish timed out. Retry later.
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying.
+              schema:
+                type: integer
+                example: 1
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /healthz:
+    get:
+      tags: [operations]
+      operationId: liveness
+      summary: Liveness probe; never checks a dependency
+      responses:
+        "200":
+          description: The process is serving.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+  /readyz:
+    get:
+      tags: [operations]
+      operationId: readiness
+      summary: Readiness probe; checks that Kafka is reachable and the service is not shutting down
+      responses:
+        "200":
+          description: Ready to accept events.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        "503":
+          description: Not ready (Kafka unreachable, startup not finished or shutting down).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+  /metrics:
+    get:
+      tags: [operations]
+      operationId: metrics
+      summary: Prometheus exposition
+      responses:
+        "200":
+          description: Metrics in the Prometheus text format.
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  parameters:
+    Traceparent:
+      name: traceparent
+      in: header
+      required: false
+      description: |
+        W3C Trace Context level 1. A valid value continues the caller's trace;
+        a missing or invalid one starts a new trace and never causes a 4xx.
+        The same trace ID is logged by the producer and sent to Kafka.
+      schema:
+        type: string
+        example: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+    Tracestate:
+      name: tracestate
+      in: header
+      required: false
+      description: Opaque vendor data. Passed through to the Kafka record when `traceparent` is valid and the value is at most 512 bytes; otherwise dropped.
+      schema:
+        type: string
+  headers:
+    RequestID:
+      description: Request ID; a well-formed incoming X-Request-ID is echoed, otherwise one is generated.
+      schema:
+        type: string
+    Traceparent:
+      description: |
+        The producer's span in the caller's trace (same trace ID, new parent ID),
+        or a new trace when the request had no valid traceparent.
+        Sent on every response.
+      schema:
+        type: string
+        example: 00-4bf92f3577b34da6a3ce929d0e0e4736-b7ad6b7169203331-01
+  schemas:
+    ActivityRequest:
+      type: object
+      additionalProperties: false
+      required: [user_id, activity_type, timestamp]
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: At most 128 bytes of UTF-8, without control characters. Used as the Kafka record key.
+        activity_type:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: At most 64 bytes of UTF-8, without control characters. Any value is accepted; only `page_view` is counted separately downstream.
+        timestamp:
+          type: string
+          format: date-time
+          description: RFC 3339, fractional seconds allowed; normalized to UTC.
+        metadata:
+          type: object
+          maxProperties: 32
+          propertyNames:
+            minLength: 1
+            maxLength: 64
+          additionalProperties:
+            type: string
+            maxLength: 2048
+          description: Optional free-form string map, passed through unchanged.
+    Accepted:
+      type: object
+      required: [event_id]
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: UUIDv7, also sent as the `event-id` Kafka header. For tracing only, never for deduplication.
+    Status:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, ready, unavailable]
+    Problem:
+      type: object
+      description: RFC 9457 problem details. Never contains internal error text.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, rule]
+            properties:
+              field:
+                type: string
+              rule:
+                type: string

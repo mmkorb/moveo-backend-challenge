@@ -1,0 +1,39 @@
+# The build context is this service directory. The build stage bind-mounts it as the
+# module source and the test stage runs `go test`, so Go sources, *_test.go and
+# testdata/ (including fuzz corpora) must stay in the context.
+
+# VCS, editors and OS files
+.git
+.gitignore
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration: never sent to the builder
+.env
+.env.*
+*.env
+secrets/
+*.pem
+*.key
+
+# Docker files themselves (changing them must not invalidate the source cache)
+Dockerfile*
+.dockerignore
+
+# Build, test and coverage outputs
+bin/
+tmp/
+*.exe
+*.test
+*.out
+*.prof
+coverage/
+go.work
+go.work.sum
+
+# Documentation is not needed to build or test the binary
+*.md
