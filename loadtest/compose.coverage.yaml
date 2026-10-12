@@ -1,0 +1,49 @@
+# End-to-end coverage overlay (ADR 0014, docs/load-testing.md "E2E coverage"). Opt-in; add it to the
+# load-test stack with:
+#
+#   mkdir -p -m 777 loadtest/results/coverage-data
+#   LT_COMPOSE_OVERLAY=loadtest/compose.coverage.yaml loadtest/run.sh smoke
+#
+# What it changes:
+# - builds producer and consumer with `go build -cover` (Dockerfile build arg COVER=1) and tags the
+#   images moveo-analytics/<service>:cover, so the normal :dev images are never overwritten;
+# - sets GOCOVERDIR and mounts a host directory there. The root filesystem is read-only, so the
+#   binaries need a writable mount to write their coverage counters. They write on exit only: a clean
+#   `docker compose down` (SIGTERM, graceful shutdown) is enough, a kill -9 loses that instance's data.
+#
+# Relative paths resolve against the project directory (the repo root), as in compose.loadtest.yaml.
+# The directory must be writable by the image's user (uid 65532), hence the `-m 777` above.
+
+x-cover-dir: &cover-dir ${LT_COVERAGE_DIR:-./loadtest/results/coverage-data}:/coverdata
+
+services:
+  producer:
+    build:
+      args:
+        COVER: "1"
+    image: moveo-analytics/producer:cover
+    environment:
+      GOCOVERDIR: /coverdata
+    volumes:
+      - *cover-dir
+
+  consumer:
+    build:
+      args:
+        COVER: "1"
+    image: moveo-analytics/consumer:cover
+    environment:
+      GOCOVERDIR: /coverdata
+    volumes:
+      - *cover-dir
+
+  # Runs the same image as the consumer; build it the same way so it does not rebuild and retag :dev.
+  consumer-migrate:
+    build:
+      args:
+        COVER: "1"
+    image: moveo-analytics/consumer:cover
+    environment:
+      GOCOVERDIR: /coverdata
+    volumes:
+      - *cover-dir

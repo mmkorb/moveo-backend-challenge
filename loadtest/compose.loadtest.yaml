@@ -1,0 +1,160 @@
+# Load/crash-test overlay (ADR 0016). Always used together with the base stack and its own project:
+#
+#   docker compose -p moveo-loadtest -f compose.yaml -f loadtest/compose.loadtest.yaml ...
+#
+# loadtest/run.sh does this for you. Relative paths below resolve against the project directory,
+# which is the directory of the FIRST file (the repo root), not against loadtest/.
+#
+# What the overlay changes:
+# - explicit cpus/memory/pids limits on every service (the whole run stays under ~6 CPUs / ~4 GiB);
+#   every value is overridable with an LT_* env var (defaults below; run.sh records them in run.json,
+#   keep both in sync);
+# - GOMEMLIMIT at about 90 % of the Go services' memory limit;
+# - no host ports: everything is reached from inside the project network, so a running dev stack
+#   (ports 8080/29092) does not conflict;
+# - two extra services under the `loadtest` profile, never started by a plain `up`:
+#   k6 (load generator) and probe (pinned curl, used by run.sh for /metrics and /readyz).
+
+x-logging: &lt-logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-hardening: &lt-hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  kafka:
+    environment:
+      KAFKA_HEAP_OPTS: ${LT_KAFKA_HEAP_OPTS:--Xms768m -Xmx768m}
+    ports: !reset []
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_KAFKA_CPUS:-1.5}"
+          memory: ${LT_KAFKA_MEMORY:-1.25G}
+          pids: ${LT_KAFKA_PIDS:-1024}
+
+  kafka-init:
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_ONESHOT_CPUS:-0.5}"
+          memory: ${LT_ONESHOT_MEMORY:-256M}
+          pids: ${LT_ONESHOT_PIDS:-256}
+
+  postgres:
+    shm_size: 128mb
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_POSTGRES_CPUS:-1.0}"
+          memory: ${LT_POSTGRES_MEMORY:-768M}
+          pids: ${LT_POSTGRES_PIDS:-256}
+
+  consumer-migrate:
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_ONESHOT_CPUS:-0.5}"
+          memory: ${LT_ONESHOT_MEMORY:-256M}
+          pids: ${LT_ONESHOT_PIDS:-256}
+
+  producer:
+    environment:
+      GOMEMLIMIT: ${LT_PRODUCER_GOMEMLIMIT:-230MiB}     # ~90 % of 256M
+    ports: !reset []
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_PRODUCER_CPUS:-0.75}"
+          memory: ${LT_PRODUCER_MEMORY:-256M}
+          pids: ${LT_PRODUCER_PIDS:-200}
+
+  consumer:
+    environment:
+      GOMEMLIMIT: ${LT_CONSUMER_GOMEMLIMIT:-345MiB}     # ~90 % of 384M
+      CONSUMER_WORKERS: ${LT_CONSUMER_WORKERS:-3}
+      FLUSH_MAX_RECORDS: ${LT_FLUSH_MAX_RECORDS:-500}
+    logging: *lt-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_CONSUMER_CPUS:-1.0}"
+          memory: ${LT_CONSUMER_MEMORY:-384M}
+          pids: ${LT_CONSUMER_PIDS:-200}
+
+  # Load generator. Runs inside the project network (no published ports) and writes its artefacts
+  # to the run's results directory. Started only by `run --rm k6` (profile loadtest).
+  k6:
+    <<: *lt-hardening
+    image: grafana/k6:2.3.0
+    profiles: [loadtest]
+    command: ["run", "--quiet", "/scripts/activities.js"]
+    environment:
+      SCENARIO: ${SCENARIO:-smoke}
+      RUN_ID: ${RUN_ID:-adhoc}
+      TARGET_URL: http://producer:8080
+      # Script knobs ("" = script default; caps are enforced in the script).
+      LT_RATE: ${LT_RATE:-}
+      LT_START_RATE: ${LT_START_RATE:-}
+      LT_PEAK_RATE: ${LT_PEAK_RATE:-}
+      LT_DURATION: ${LT_DURATION:-}
+      LT_ITERATIONS: ${LT_ITERATIONS:-}
+      LT_PRE_ALLOCATED_VUS: ${LT_PRE_ALLOCATED_VUS:-}
+      LT_MAX_VUS: ${LT_MAX_VUS:-}
+      LT_USERS: ${LT_USERS:-}
+      LT_INVALID_RATIO: ${LT_INVALID_RATIO:-}
+      LT_PREV_DAY_RATIO: ${LT_PREV_DAY_RATIO:-}
+      LT_REQUEST_TIMEOUT: ${LT_REQUEST_TIMEOUT:-}
+      LT_CHAOS_AT: ${LT_CHAOS_AT:-}
+      LT_CHAOS_DOWN_FOR: ${LT_CHAOS_DOWN_FOR:-}
+      LT_CHAOS_RECOVERY: ${LT_CHAOS_RECOVERY:-}
+      # k6 itself.
+      K6_WEB_DASHBOARD: "true"
+      K6_WEB_DASHBOARD_EXPORT: /results/k6-dashboard.html
+      K6_WEB_DASHBOARD_PERIOD: ${LT_K6_DASHBOARD_PERIOD:-5s}
+      K6_NO_USAGE_REPORT: "true"
+      K6_AUTO_EXTENSION_RESOLUTION: "false"          # never download a custom k6 binary at run time
+    volumes:
+      - ./loadtest/k6:/scripts:ro
+      - ${LT_RESULTS_DIR:-./loadtest/results/adhoc}:/results
+    tmpfs:
+      - /tmp:size=64m
+    depends_on:
+      producer:
+        condition: service_healthy
+    logging: *lt-logging
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_K6_CPUS:-1.0}"
+          memory: ${LT_K6_MEMORY:-768M}
+          pids: ${LT_K6_PIDS:-512}
+
+  # Pinned curl used by run.sh: one-shot /metrics snapshots, /readyz polling and the lag sampler
+  # (the consumer port is not published and the Go images have no shell or curl).
+  probe:
+    <<: *lt-hardening
+    image: curlimages/curl:8.22.0
+    profiles: [loadtest]
+    command: ["curl", "--version"]
+    volumes:
+      - ${LT_RESULTS_DIR:-./loadtest/results/adhoc}:/results
+    logging: *lt-logging
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "${LT_PROBE_CPUS:-0.25}"
+          memory: ${LT_PROBE_MEMORY:-64M}
+          pids: ${LT_PROBE_PIDS:-64}
