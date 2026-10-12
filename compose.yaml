@@ -1,0 +1,172 @@
+name: moveo-analytics
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app: &app
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  stop_grace_period: 30s
+  restart: unless-stopped
+  logging: *logging
+  environment: &app-env
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+    KAFKA_BROKERS: kafka:9092
+    GOMEMLIMIT: 230MiB
+  deploy:
+    resources:
+      limits: { cpus: "1", memory: 256M, pids: 200 }
+
+services:
+  kafka:
+    image: apache/kafka:4.3.1
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1        # local single broker only
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms512m -Xmx512m
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "127.0.0.1:29092:29092"                        # host tools only
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      start_period: 30s
+      start_interval: 2s
+      retries: 6
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 1G, pids: 1024 }
+    logging: *logging
+    restart: unless-stopped
+
+  kafka-init:
+    image: apache/kafka:4.3.1
+    entrypoint: ["/bin/bash", "/create-topics.sh"]
+    environment:
+      BOOTSTRAP_SERVER: kafka:9092
+    volumes:
+      - ./deploy/kafka/create-topics.sh:/create-topics.sh:ro
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_DB: analytics
+      POSTGRES_USER: analytics_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_owner_password
+    secrets: [postgres_owner_password, analytics_app_password]
+    volumes:
+      - pg-data:/var/lib/postgresql                    # PG18: PGDATA=/var/lib/postgresql/18/docker
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      start_interval: 1s
+      retries: 5
+    shm_size: 128mb
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 512M, pids: 256 }
+    logging: *logging
+    restart: unless-stopped
+
+  consumer-migrate:
+    build: { context: ./services/consumer, target: final }
+    image: moveo-analytics/consumer:dev
+    command: ["migrate"]
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_NAME: analytics
+      DATABASE_USER: analytics_owner
+      DATABASE_PASSWORD_FILE: /run/secrets/postgres_owner_password
+      DATABASE_SSLMODE: disable
+    secrets: [postgres_owner_password]
+    healthcheck:
+      disable: true                                    # one-shot job; image HEALTHCHECK does not apply
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128M, pids: 100 }
+    logging: *logging
+    restart: "no"
+
+  producer:
+    <<: *app
+    build: { context: ./services/producer, target: final }
+    image: moveo-analytics/producer:dev
+    environment:
+      <<: *app-env
+      HTTP_ADDR: ":8080"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
+  consumer:                                            # no container_name, no ports: --scale works
+    <<: *app
+    build: { context: ./services/consumer, target: final }
+    image: moveo-analytics/consumer:dev
+    environment:
+      <<: *app-env
+      HTTP_ADDR: ":8081"                               # internal health/metrics only
+      CONSUMER_WORKERS: ${CONSUMER_WORKERS:-3}
+      DATABASE_HOST: postgres
+      DATABASE_NAME: analytics
+      DATABASE_USER: analytics_app
+      DATABASE_PASSWORD_FILE: /run/secrets/analytics_app_password
+      DATABASE_SSLMODE: disable
+    secrets: [analytics_app_password]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      consumer-migrate:
+        condition: service_completed_successfully
+
+volumes:
+  kafka-data:
+  pg-data:
+
+secrets:
+  postgres_owner_password:
+    file: ./deploy/secrets/postgres_owner_password.txt
+  analytics_app_password:
+    file: ./deploy/secrets/analytics_app_password.txt
