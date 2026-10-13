@@ -6,6 +6,8 @@
 - **Amended:** 2026-10-12 — `offset_fence_resyncs_total` (fence recovery), `instance_id` (static membership), consumer `trace_id` lines named.
 - **Scope:** both
 
+> **TL;DR** — Uses injected `log/slog` JSON logs (no payloads, `user_id` only at debug), a small set of Prometheus metrics on an injected registry, `/healthz` and `/readyz` on both services, and W3C `traceparent` propagation without the OpenTelemetry SDK. No Prometheus or Grafana containers. Trade-off: no dashboards, and constructors take extra logger and metrics parameters.
+
 ## Context
 
 - The challenge asks for nothing beyond a working pipeline. Our summary of the challenge (§6, §8) asks for structured logs for operational events (publish/consume failures, retries, DB errors, latency, shutdown) and says *basic metrics are a useful starting point*; Prometheus/Grafana are **not** mandatory.

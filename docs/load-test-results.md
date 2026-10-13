@@ -1,5 +1,7 @@
 # Load test results
 
+> **TL;DR** — All 24 runs on 2026-10-12 passed: with equal limits the pipeline kept up with every stress step up to 3000 req/s (the harness maximum) at p95 64 ms, and Kafka saturated first (from 1757 req/s), then producer, consumer, Postgres. All crash runs showed zero loss and zero overcount, including a commit-gap run that skipped 462 already-applied records.
+
 Results of the load, stress, crash and soak runs made on 2026-10-12 with the harness described in [load-testing.md](load-testing.md) ([ADR 0016](adrs/0016-load-and-crash-testing.md)). Every number comes from a run directory (`report.md`, `k6-summary.json`, `k6-dashboard.html`, `stats.jsonl`, `lag.jsonl`, `timeline.jsonl`, `logs/consumer.log`). Values marked **(derived)** are computed from those raw files, not printed in a report. CPU % is docker's figure: 100 % is one core, so a 1.5 CPU limit is 150 %. The scaling decision built on these results is [ADR 0017](adrs/0017-scaling-and-capacity.md).
 
 ## 1. Setup and method

@@ -5,6 +5,8 @@ last_verified: 2026-10-12
 
 # Domain
 
+> **TL;DR** — Defines the business glossary, entities, record lifecycle, invariants and rules of the pipeline. Key takeaway: counters grow only by deltas, dates are UTC, and several invariants (plausible timestamps, client-retry dedup, monotonic counters) are not enforced by anything.
+
 Vocabulary and rules come from [ADR 0004](adrs/0004-domain-model-and-ubiquitous-language.md) and [ADR 0009](adrs/0009-aggregation-data-model.md). "Aggregate" means a SQL roll-up, not a DDD Aggregate.
 
 ## Glossary

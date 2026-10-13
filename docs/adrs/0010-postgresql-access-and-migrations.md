@@ -5,6 +5,8 @@
 - **Amended:** 2026-10-12 — a flush is now one explicit transaction that also compare-and-sets the partition's position in `consumer_offsets` (migration `00002`), per [ADR 0008](0008-consumer-concurrency-batching-and-delivery-semantics.md) option A.
 - **Scope:** consumer
 
+> **TL;DR** — Uses pgx v5 with pgxpool and hand-written SQL, and goose as an embedded library run by a one-shot `consumer migrate` job as the owner role. A flush is one four-round-trip transaction (begin, position compare-and-set, upsert, commit), and the runtime role has DML only. Trade-off: SQL is verified only by integration tests, and two roles and secrets must be managed.
+
 ## Context
 
 - The consumer writes the aggregates to one table, `activity_aggregates` ([ADR 0009](0009-aggregation-data-model.md)), with a batched `unnest` upsert, and the Kafka position each flush reaches to `consumer_offsets`, in the same transaction ([ADR 0008](0008-consumer-concurrency-batching-and-delivery-semantics.md)).

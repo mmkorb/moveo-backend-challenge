@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Sets the security baseline for a local deployment: STRIDE threat table, strict input limits at both edges, parameterized SQL, a DML-only `analytics_app` role, file-based secrets and hardened distroless containers. No API auth, TLS or Kafka SASL is built; the production additions are documented. Trade-off: anyone with local access can post events for any user.
+
 ## Context
 
 - The deliverable is a **local / evaluation deployment**: one Compose stack on a developer machine ([0015](0015-containerization-and-local-deployment.md)). It has no authentication requirement, no TLS and no internet exposure. The design must still be secure by default and make the production gap explicit.

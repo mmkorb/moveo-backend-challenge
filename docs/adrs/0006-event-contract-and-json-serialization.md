@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — The Kafka value is the challenge's JSON object, keyed by `user_id`, with `event-id`, `schema-version` and W3C trace headers. `contracts/user_activity.v1.schema.json` is the only shared artifact, guarded by contract tests in both services, and the codec is stdlib `encoding/json`. Trade-off: JSON is bigger than binary formats, and schema evolution relies on rules and tests, not a registry.
+
 ## Context
 
 - The challenge defines the message on `incoming.user_activity` by example, as JSON:

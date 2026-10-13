@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Builds the producer, consumer, two images and Compose first, then the bonus items, and lists what is out of scope. Fixes 12 assumptions: UTC dates, one row per user per day, unknown activity types accepted, `202` means durable in Kafka. Main trade-off: a second 6-row table, `consumer_offsets`, deviates from the challenge's "one table".
+
 ## Context
 
 The challenge ([`../challenge_description.md`](../challenge_description.md)) is short and leaves several points open. It invites us to fill the gaps ourselves:

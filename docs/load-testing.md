@@ -1,5 +1,7 @@
 # Load and crash testing
 
+> **TL;DR** — Explains how to run the k6 load and crash harness (`loadtest/run.sh`), its scenarios, resource profiles, output files and PASS criteria. Key takeaway: every run is isolated, ends with a PASS/FAIL report, and checks no loss, zero overcount and `DB = topic - DLQ`.
+
 How to run the load and crash-test harness, where its output goes, and how to read it. Design rationale and rules: [ADR 0016](adrs/0016-load-and-crash-testing.md). Measured results of the 2026-10-12 runs: [load-test-results.md](load-test-results.md). To start the system itself, see the [README](../README.md#run-the-system).
 
 ## What the harness is

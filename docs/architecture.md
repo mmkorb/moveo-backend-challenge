@@ -5,6 +5,8 @@ last_verified: 2026-10-12
 
 # Architecture
 
+> **TL;DR** — Maps the two hexagonal Go modules: layers and their import rules, the request flow, delivery guarantees, external integrations and where new code goes. Key takeaway: 202 means the record is in Kafka, and the consumer applies each record once per stored position.
+
 Two independent Go modules, one per service, each hexagonal (ports and adapters) with manual dependency injection. They never import each other and share only the event contract in `contracts/`. Deployment shape: one Compose stack (`compose.yaml`) with Kafka, Postgres, two one-shot jobs (`kafka-init`, `consumer-migrate`), the producer and a scalable consumer. The "why" of each decision is in the ADRs ([index](adrs/adr-index.md)); this file says where things are.
 
 ## Layers

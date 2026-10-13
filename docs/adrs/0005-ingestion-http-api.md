@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** producer
 
+> **TL;DR** — Serves `POST /v1/activities` with stdlib `net/http` and `ServeMux`, no router or framework. Returns `202` only after the Kafka ack (`acks=all`), `503` with `Retry-After` when Kafka is down, and RFC 9457 error bodies. Trade-off: request latency includes the Kafka round trip, and nothing is buffered during an outage.
+
 ## Context
 
 - The challenge asks for "a Kafka producer that exposes a REST endpoint". The API surface is **one write endpoint** plus operational endpoints (health, readiness, metrics).

@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — One distroless, non-root, static-binary image per service and a single `compose.yaml` that starts Kafka (KRaft), Postgres, a topic-init job, a migrate job and both services in dependency order. Hardening and file secrets apply to the app containers. Trade-off: no shell in the app images, and Kafka runs with replication factor 1 (local only).
+
 ## Context
 
 - The challenge asks for "a Docker image for both the producer and consumer" and deployment instructions. Our summary of the challenge (§2, §9) settles on **two images, one container per service**, with Compose also starting Kafka and PostgreSQL.

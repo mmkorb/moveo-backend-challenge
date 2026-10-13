@@ -5,6 +5,8 @@
 - **Amended:** 2026-10-12 (review) - the consumer settings table follows the code (static membership, session timeout, stored-position resume, explicit static leave), and the DLQ client allows idempotent produce cancellation.
 - **Scope:** both
 
+> **TL;DR** — Uses franz-go (pure Go, no cgo) in both services, with `user_id` as the record key on a 6-partition topic and a 3-partition DLQ. Producer settings are `acks=all` and idempotent writes. Topics are created by a script, never by the apps. Trade-off: at most 6 active consumers, and a hot user stays on one partition.
+
 ## Context
 
 - Kafka is a hard requirement. The topic name `incoming.user_activity` is fixed by the challenge.

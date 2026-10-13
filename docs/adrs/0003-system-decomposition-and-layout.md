@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Splits the system into two independent Go modules (producer, consumer) with no shared code, only the JSON schema contract. Each service is hexagonal (domain, ports, application, adapters), wired by hand in `cmd/`, with env-only config validated at startup. Trade-off: `ActivityEvent` exists twice, and contract tests guard against drift.
+
 ## Context
 
 - The challenge asks for a **producer** (REST → Kafka) and a **consumer** (Kafka → PostgreSQL), "a Docker image for both", and horizontal scaling of consumers ([ADR 0000](0000-scope-interpretation-and-assumptions.md)).

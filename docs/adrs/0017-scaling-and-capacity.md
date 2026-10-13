@@ -4,6 +4,8 @@
 - **Date:** 2026-10-12
 - **Scope:** both
 
+> **TL;DR** — Records how each component scales beyond Compose (stateless producer replicas, consumers up to the partition count, Kafka RF 3, bounded PostgreSQL connections) and which signals would drive autoscaling. Measured bottleneck order with equal limits: Kafka, producer, consumer, PostgreSQL. Trade-off: no Kubernetes manifests are shipped, and the figures come from one host with a single broker.
+
 ## Context
 
 - The challenge gives bonus points if the service "can be scaled horizontally by adding more consumers" ([ADR 0000](0000-scope-interpretation-and-assumptions.md)). [ADR 0008](0008-consumer-concurrency-batching-and-delivery-semantics.md) and [ADR 0012](0012-lifecycle-and-graceful-shutdown.md) define how consumers join the group. This ADR covers the whole pipeline: producer, consumer, Kafka and PostgreSQL.

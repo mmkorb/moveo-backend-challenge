@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Tests with stdlib `testing`, `go-cmp`, hand-written fakes and `testing/synctest`, plus fixture-based contract tests and testcontainers integration tests behind a build tag. A local gate runs lint, coverage (80% on domain and application), boundary checks, govulncheck, image checks and a smoke run. Trade-off: integration tests need Docker, and `-race` runs only in Linux containers.
+
 ## Context
 
 - Our summary of the challenge (§8) lists what must be tested: the end-to-end path (HTTP → `incoming.user_activity` → aggregate row), repeated users, different activity types, date boundaries, invalid requests, Kafka/Postgres connection failures, retry behaviour and shutdown.

@@ -5,6 +5,8 @@
 - **Amended:** 2026-10-12 — static group membership for the consumer, with an explicit leave on a clean stop and an explicit session timeout.
 - **Scope:** both
 
+> **TL;DR** — Handles SIGTERM/SIGINT in `main` only, then runs a staged shutdown with per-stage deadlines (20 s total, 30 s Compose grace): readiness off, flush, commit, leave group, close. Consumers use static group membership with an explicit leave, so restarts take partitions back at once. Trade-off: a stop can take up to 20 s, and instance IDs must be unique per replica.
+
 ## Context
 
 - The challenge awards bonus points if "both of your microservices shutdown gracefully when receiving SIGTERM or SIGINT". The summary (§8) also asks that shutdown be tested.

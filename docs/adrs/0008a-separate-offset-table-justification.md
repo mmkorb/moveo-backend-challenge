@@ -5,6 +5,8 @@
 - **Scope:** consumer
 - **Addendum to:** [ADR 0008](0008-consumer-concurrency-batching-and-delivery-semantics.md)
 
+> **TL;DR** — Keeps Kafka positions in a separate 6-row `consumer_offsets` table instead of adding offset columns to `activity_aggregates`. Recovery is a primary-key lookup, the business table stays free of transport metadata, and partition changes stay cheap. Trade-off: two tables, against the challenge's "one table" recommendation.
+
 ## Context
 
 - The challenge says "Only one table is needed/recommended" for the aggregated results ([ADR 0000](0000-scope-interpretation-and-assumptions.md)).

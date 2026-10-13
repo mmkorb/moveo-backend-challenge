@@ -5,6 +5,8 @@
 - **Amended:** 2026-10-12 — the consumer's Kafka positions live in a second, infrastructure-only table, `consumer_offsets` ([ADR 0008](0008-consumer-concurrency-batching-and-delivery-semantics.md), [addendum](0008a-separate-offset-table-justification.md)). The aggregate model is unchanged.
 - **Scope:** consumer
 
+> **TL;DR** — One table, `activity_aggregates`, with one row per user per UTC day and CHECK constraints. Writes are a batched `unnest` upsert with additive deltas, and unique users come from `COUNT(DISTINCT user_id)` over the range. Trade-off: no sub-day resolution, and the upsert is not idempotent on its own, so it runs only with the position compare-and-set.
+
 ## Context
 
 The challenge asks the consumer to "perform data transformations, such as counting the number of users and the number of `page_view` activities" and to "write aggregated results to a PostgreSQL database. Only one table is needed/recommended."

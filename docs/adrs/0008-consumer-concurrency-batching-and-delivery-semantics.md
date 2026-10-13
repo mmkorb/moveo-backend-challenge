@@ -6,6 +6,8 @@
 - **Amended:** 2026-10-12 — **fence recovery**: a fenced partition is resumed in place from the reloaded stored position instead of stalling until the next rebalance.
 - **Scope:** consumer
 
+> **TL;DR** — One worker goroutine per partition folds records into per-(date, user) deltas and flushes in one PostgreSQL transaction that also compare-and-sets the partition position in `consumer_offsets`. This gives effectively-once delivery per partition, and a stale owner is fenced and resumed in place. Trade-off: a second table and two extra round trips per flush; client HTTP retries still double count.
+
 ## Context
 
 - The challenge awards bonus points if the service "can be scaled horizontally by adding more consumers", and notes that they "can be run in separate goroutines within the same service".

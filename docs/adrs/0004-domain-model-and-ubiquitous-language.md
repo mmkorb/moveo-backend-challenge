@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Adopts lightweight tactical DDD: a fixed glossary, a validating `NewActivityEvent` constructor, and deltas instead of totals, applied by an atomic `ON CONFLICT` upsert. Unknown activity types are accepted, and only `page_view` is special. Trade-off: the event type is duplicated in both modules and typos can create new types.
+
 ## Context
 
 - [ADR 0003](0003-system-decomposition-and-layout.md) gives each service a hexagonal layout. Hexagonal architecture says **where** code goes; it doesn't say how to model the problem. DDD covers that, and the two are complementary.

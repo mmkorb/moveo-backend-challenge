@@ -6,6 +6,8 @@
 - **Amended:** 2026-10-12 (review) — control characters in `user_id` / `activity_type` are a validation failure on the consumer too, and SQLSTATE class 22 (data exception) gets its own retry class `data_exception`.
 - **Scope:** both
 
+> **TL;DR** — Classifies errors first. Permanent ones (decode, validation) go to the DLQ; transient and unknown ones are retried without limit, with exponential backoff and full jitter, in a single layer (the partition worker), each attempt bounded by `FLUSH_TIMEOUT`. Trade-off: a stuck partition blocks until someone fixes it, in exchange for never dead-lettering valid data.
+
 ## Context
 
 - The challenge asks us to "handle task retries and failures with a well-defined strategy". The summary (§8) asks that failures "do not silently lose work" and that Kafka/PostgreSQL connection failures and retries be tested.

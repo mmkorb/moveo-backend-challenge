@@ -6,6 +6,8 @@
 - **Amended:** 2026-10-12 — the crash table names the recovery times and retries each crash run reports (static membership, `FLUSH_TIMEOUT`, [ADR 0011](0011-failure-handling-retry-and-dlq.md), [ADR 0012](0012-lifecycle-and-graceful-shutdown.md)).
 - **Scope:** both
 
+> **TL;DR** — Adds a k6 harness in `loadtest/` that runs in its own Compose project with hard resource limits, injects crashes (kill, stop, pause, scale, commit gap, poison records) and ends each run with a PASS/FAIL report. Every run asserts no loss, zero overcount and `DB = topic - DLQ`. Trade-off: there is no monitoring stack, and all numbers come from one shared host.
+
 ## Context
 
 - The bonus requirements (horizontal scaling, retry strategy, graceful shutdown) and the delivery semantics in [0008](0008-consumer-concurrency-batching-and-delivery-semantics.md) are claims. Unit and integration tests ([0014](0014-testing-strategy-and-quality-tooling.md)) check them piece by piece; nothing yet checks them on the whole stack under load and under failure.

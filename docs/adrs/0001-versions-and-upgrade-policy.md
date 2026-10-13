@@ -4,6 +4,8 @@
 - **Date:** 2026-10-11
 - **Scope:** both
 
+> **TL;DR** — Pins every version exactly (Go 1.27.2, Kafka 4.3.1, PostgreSQL 18.6, franz-go v1.22.1, pgx v5.11.0) and skips any library release younger than 14 days. This is the only ADR with exact versions. Trade-off: a wanted fix can wait two weeks, unless it is a security fix.
+
 ## Context
 
 - Go, Apache Kafka and PostgreSQL have no "LTS" label. Each publishes a support window instead:

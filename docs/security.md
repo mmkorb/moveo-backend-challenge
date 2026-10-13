@@ -5,6 +5,8 @@ last_verified: 2026-10-12
 
 # Security
 
+> **TL;DR** — Lists data classification, trust boundaries, auth, secrets, logging rules and egress as the code implements them today for a local deployment. Key takeaway: there is no authentication, `user_id` and `metadata` are never logged, and the DLQ is as sensitive as the main topic.
+
 Scope: a local or evaluation deployment on one machine. The threat model, mitigations and the production gap are in [ADR 0002](adrs/0002-security-baseline-and-threat-model.md); this file lists what the code does today and the rules to keep.
 
 ## Data classification
